@@ -10,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
+//import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HiveShellBaseTest {
+public class HiveShellBaseTest {/*
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -140,4 +140,4 @@ public class HiveShellBaseTest {
 
 
 
-}
+*/}

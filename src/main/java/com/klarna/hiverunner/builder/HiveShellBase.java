@@ -40,262 +40,277 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * HiveShell implementation delegating to HiveServerContainer
  */
 class HiveShellBase implements HiveShell {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    protected boolean started = false;
+	protected boolean started = false;
 
-    protected final HiveServerContainer hiveServerContainer;
+	protected final HiveServerContainer hiveServerContainer;
 
-    protected final Map<String, String> props;
-    protected final HiveServerContext context;
-    protected final List<String> setupScripts;
-    protected final List<HiveResource> resources;
-    protected final List<String> scriptsUnderTest;
+	protected final Map<String, String> props;
+	protected final HiveServerContext context;
+	protected final List<String> setupScripts;
+	protected final List<HiveResource> resources;
+	protected final List<String> scriptsUnderTest;
 
+	HiveShellBase(HiveServerContainer hiveServerContainer,
+			Map<String, String> props, HiveServerContext context,
+			List<String> setupScripts, List<HiveResource> resources,
+			List<String> scriptsUnderTest) {
+		this.hiveServerContainer = hiveServerContainer;
+		this.props = props;
+		this.context = context;
+		this.setupScripts = new ArrayList<>(setupScripts);
+		this.resources = new ArrayList<>(resources);
+		this.scriptsUnderTest = new ArrayList<>(scriptsUnderTest);
+	}
 
-    HiveShellBase(HiveServerContainer hiveServerContainer, Map<String, String> props,
-                  HiveServerContext context, List<String> setupScripts,
-                  List<HiveResource> resources,
-                  List<String> scriptsUnderTest) {
-        this.hiveServerContainer = hiveServerContainer;
-        this.props = props;
-        this.context = context;
-        this.setupScripts = new ArrayList<>(setupScripts);
-        this.resources = new ArrayList<>(resources);
-        this.scriptsUnderTest = new ArrayList<>(scriptsUnderTest);
-    }
+	@Override
+	public List<String> executeQuery(String s) {
+		assertStarted();
+		return hiveServerContainer.executeQuery(s);
+	}
 
-    @Override
-    public List<String> executeQuery(String s) {
-        assertStarted();
-        return hiveServerContainer.executeQuery(s);
-    }
+	@Override
+	public void execute(String s) {
+		assertStarted();
+		hiveServerContainer.executeScript(s);
+	}
 
-    @Override
-    public void execute(String s) {
-        assertStarted();
-        hiveServerContainer.executeScript(s);
-    }
+	@Override
+	public HiveServer.HiveServerHandler getClient() {
+		assertStarted();
+		return hiveServerContainer.getClient();
+	}
 
-    @Override
-    public HiveServer.HiveServerHandler getClient() {
-        assertStarted();
-        return hiveServerContainer.getClient();
-    }
+	@Override
+	public void start() {
+		assertNotStarted();
+		started = true;
+		// props.put("hive.exec.mode.local.auto","true");
+		/*props.put("mapred.job.tracker", "local");
+		props.put("fs.default.name", "file:///tmp");
+		props.put("hive.metastore.warehouse.dir", "file:///tmp/warehouse");
+		props.put("javax.jdo.option.ConnectionURL",
+				"jdbc:derby:;databaseName=/tmp/metastore_db;create=true");*/
+		hiveServerContainer.init(props, context);
 
-    @Override
-    public void start() {
-        assertNotStarted();
-        started = true;
+		executeSetupScripts();
 
-        hiveServerContainer.init(props, context);
+		prepareResources();
 
-        executeSetupScripts();
+		executeScriptsUnderTest();
+	}
 
-        prepareResources();
+	@Override
+	public void addSetupScript(String script) {
+		assertNotStarted();
+		setupScripts.add(script);
+	}
 
-        executeScriptsUnderTest();
-    }
+	@Override
+	public void addSetupScripts(Charset charset, Path... scripts) {
+		assertNotStarted();
+		for (Path script : scripts) {
+			assertFileExists(script);
+			try {
+				String join = new String(Files.readAllBytes(script), charset);
+				setupScripts.add(join);
+			} catch (IOException e) {
+				throw new IllegalArgumentException(
+						"Unable to read setup script file '" + script + "': "
+								+ e.getMessage(), e);
+			}
+		}
+	}
 
-    @Override
-    public void addSetupScript(String script) {
-        assertNotStarted();
-        setupScripts.add(script);
-    }
+	@Override
+	public void addSetupScripts(Charset charset, File... scripts) {
+		Path[] paths = new Path[scripts.length];
+		for (int i = 0; i < paths.length; i++) {
+			paths[i] = Paths.get(scripts[i].toURI());
+		}
+		addSetupScripts(charset, paths);
+	}
 
-    @Override
-    public void addSetupScripts(Charset charset, Path... scripts) {
-        assertNotStarted();
-        for (Path script : scripts) {
-            assertFileExists(script);
-            try {
-                String join = new String(Files.readAllBytes(script), charset);
-                setupScripts.add(join);
-            } catch (IOException e) {
-                throw new IllegalArgumentException(
-                        "Unable to read setup script file '" + script + "': " + e.getMessage(), e);
-            }
-        }
-    }
+	@Override
+	public void addSetupScripts(File... scripts) {
+		addSetupScripts(Charset.defaultCharset(), scripts);
+	}
 
-    @Override
-    public void addSetupScripts(Charset charset, File... scripts) {
-        Path[] paths = new Path[scripts.length];
-        for (int i = 0; i < paths.length; i++) {
-            paths[i] = Paths.get(scripts[i].toURI());
-        }
-        addSetupScripts(charset, paths);
-    }
+	@Override
+	public void addSetupScripts(Path... scripts) {
+		addSetupScripts(Charset.defaultCharset(), scripts);
+	}
 
-    @Override
-    public void addSetupScripts(File... scripts) {
-        addSetupScripts(Charset.defaultCharset(), scripts);
-    }
+	@Override
+	public TemporaryFolder getBaseDir() {
+		return hiveServerContainer.getBaseDir();
+	}
 
-    @Override
-    public void addSetupScripts(Path... scripts) {
-        addSetupScripts(Charset.defaultCharset(), scripts);
-    }
+	@Override
+	public String expandVariableSubstitutes(String expression) {
+		assertStarted();
+		HiveConf hiveConf = getHiveConf();
+		Preconditions.checkNotNull(hiveConf);
+		try {
+			return new VariableSubstitution().substitute(hiveConf, expression);
+		} catch (NullPointerException e) {
+			throw new IllegalArgumentException("Unable to expand '"
+					+ expression + "': " + e.getMessage(), e);
+		}
+	}
 
-    @Override
-    public TemporaryFolder getBaseDir() {
-        return hiveServerContainer.getBaseDir();
-    }
+	@Override
+	public void setProperty(String key, String value) {
+		assertNotStarted();
+		props.put(key, value);
+	}
 
-    @Override
-    public String expandVariableSubstitutes(String expression) {
-        assertStarted();
-        HiveConf hiveConf = getHiveConf();
-        Preconditions.checkNotNull(hiveConf);
-        try {
-            return new VariableSubstitution().substitute(hiveConf, expression);
-        } catch (NullPointerException e) {
-            throw new IllegalArgumentException("Unable to expand '" + expression + "': " + e.getMessage(), e);
-        }
-    }
+	@Override
+	public HiveConf getHiveConf() {
+		assertStarted();
+		return hiveServerContainer.getClient().getHiveConf();
+	}
 
+	@Override
+	public OutputStream getResourceOutputStream(String targetFile) {
+		try {
+			assertNotStarted();
+			HiveResource resource = new HiveResource(targetFile);
+			resources.add(resource);
+			OutputStream hiveShellStateAwareOutputStream = createPreStartOutputStream(resource
+					.getOutputStream());
+			return hiveShellStateAwareOutputStream;
+		} catch (IOException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
+	}
 
-    @Override
-    public void setProperty(String key, String value) {
-        assertNotStarted();
-        props.put(key, value);
-    }
+	@Override
+	public void addResource(String targetFile, String data) {
+		try {
+			assertNotStarted();
+			resources.add(new HiveResource(targetFile, data));
+		} catch (IOException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
+	}
 
-    @Override
-    public HiveConf getHiveConf() {
-        assertStarted();
-        return hiveServerContainer.getClient().getHiveConf();
-    }
+	@Override
+	public void addResource(String targetFile, Path sourceFile) {
+		try {
+			assertNotStarted();
+			assertFileExists(sourceFile);
+			resources.add(new HiveResource(targetFile, sourceFile));
+		} catch (IOException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
+	}
 
-    @Override
-    public OutputStream getResourceOutputStream(String targetFile) {
-        try {
-            assertNotStarted();
-            HiveResource resource = new HiveResource(targetFile);
-            resources.add(resource);
-            OutputStream hiveShellStateAwareOutputStream = createPreStartOutputStream(resource.getOutputStream());
-            return hiveShellStateAwareOutputStream;
-        } catch (IOException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-    }
+	@Override
+	public void addResource(String targetFile, File sourceFile) {
+		addResource(targetFile, Paths.get(sourceFile.toURI()));
+	}
 
-    @Override
-    public void addResource(String targetFile, String data) {
-        try {
-            assertNotStarted();
-            resources.add(new HiveResource(targetFile, data));
-        } catch (IOException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-    }
+	private void executeSetupScripts() {
+		for (String setupScript : setupScripts) {
+			logger.info("Executing script: " + setupScript);
+			hiveServerContainer.executeScript(setupScript);
+		}
+	}
 
-    @Override
-    public void addResource(String targetFile, Path sourceFile) {
-        try {
-            assertNotStarted();
-            assertFileExists(sourceFile);
-            resources.add(new HiveResource(targetFile, sourceFile));
-        } catch (IOException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-    }
+	private void prepareResources() {
+		for (HiveResource resource : resources) {
+			String expandedPath = hiveServerContainer
+					.expandVariableSubstitutes(resource.getTargetFile());
 
-    @Override
-    public void addResource(String targetFile, File sourceFile) {
-        addResource(targetFile, Paths.get(sourceFile.toURI()));
-    }
+			assertResourcePreconditions(resource, expandedPath);
 
-    private void executeSetupScripts() {
-        for (String setupScript : setupScripts) {
-            logger.info("Executing script: " + setupScript);
-            hiveServerContainer.executeScript(setupScript);
-        }
-    }
+			Path targetFile = Paths.get(expandedPath);
 
-    private void prepareResources() {
-        for (HiveResource resource : resources) {
-            String expandedPath = hiveServerContainer.expandVariableSubstitutes(resource.getTargetFile());
+			// Create target file in the tmp dir and write test data to it.
+			try {
+				Files.createDirectories(targetFile.getParent());
+				OutputStream targetFileOutputStream = Files.newOutputStream(
+						targetFile, StandardOpenOption.CREATE_NEW);
+				targetFileOutputStream.write(resource.getOutputStream()
+						.toByteArray());
+				resource.getOutputStream().close();
+				targetFileOutputStream.close();
+			} catch (IOException e) {
+				throw new IllegalStateException(
+						"Failed to create resource target file: " + targetFile
+								+ " (" + resource.getTargetFile() + "): "
+								+ e.getMessage(), e);
+			}
 
-            assertResourcePreconditions(resource, expandedPath);
+			logger.info("Created hive resource " + targetFile);
 
-            Path targetFile = Paths.get(expandedPath);
+		}
+	}
 
-            // Create target file in the tmp dir and write test data to it.
-            try {
-                Files.createDirectories(targetFile.getParent());
-                OutputStream targetFileOutputStream = Files.newOutputStream(targetFile, StandardOpenOption.CREATE_NEW);
-                targetFileOutputStream.write(resource.getOutputStream().toByteArray());
-                resource.getOutputStream().close();
-                targetFileOutputStream.close();
-            } catch (IOException e) {
-                throw new IllegalStateException(
-                        "Failed to create resource target file: " + targetFile + " (" + resource.getTargetFile() + "): "
-                                + e.getMessage(), e);
-            }
+	private void executeScriptsUnderTest() {
+		for (String script : scriptsUnderTest) {
+			try {
+				hiveServerContainer.executeScript(script);
+			} catch (Exception e) {
+				throw new IllegalStateException("Failed to executeScript '"
+						+ script + "': " + e.getMessage(), e);
+			}
+		}
+	}
 
-            logger.info("Created hive resource " + targetFile);
+	protected final void assertResourcePreconditions(HiveResource resource,
+			String expandedPath) {
+		String unexpandedPropertyPattern = ".*\\$\\{.*\\}.*";
+		boolean isUnexpanded = !expandedPath.matches(unexpandedPropertyPattern);
 
-        }
-    }
+		Preconditions.checkArgument(isUnexpanded, "File path %s contains "
+				+ "unresolved references. Original arg was: %s", expandedPath,
+				resource.getTargetFile());
 
+		boolean isTargetFileWithinTestDir = expandedPath
+				.startsWith(hiveServerContainer.getBaseDir().getRoot()
+						.getAbsolutePath());
 
-    private void executeScriptsUnderTest() {
-        for (String script : scriptsUnderTest) {
-            try {
-                hiveServerContainer.executeScript(script);
-            } catch (Exception e) {
-                throw new IllegalStateException(
-                        "Failed to executeScript '" + script + "': " + e.getMessage(), e);
-            }
-        }
-    }
+		Preconditions
+				.checkArgument(
+						isTargetFileWithinTestDir,
+						"All resource target files should be created in a subdirectory to the test case basedir : %s",
+						resource);
+	}
 
-    protected final void assertResourcePreconditions(HiveResource resource, String expandedPath) {
-        String unexpandedPropertyPattern = ".*\\$\\{.*\\}.*";
-        boolean isUnexpanded = !expandedPath.matches(unexpandedPropertyPattern);
+	protected final void assertFileExists(Path file) {
+		Preconditions.checkNotNull(file, "File argument is null");
+		Preconditions.checkArgument(Files.exists(file),
+				"File %s does not exist", file);
+		Preconditions.checkArgument(Files.isRegularFile(file),
+				"%s is not a file", file);
+	}
 
-        Preconditions.checkArgument(isUnexpanded, "File path %s contains "
-                + "unresolved references. Original arg was: %s", expandedPath, resource.getTargetFile());
+	protected final void assertNotStarted() {
+		Preconditions.checkState(!started, "HiveShell was already started");
+	}
 
-        boolean isTargetFileWithinTestDir = expandedPath.startsWith(
-                hiveServerContainer.getBaseDir().getRoot().getAbsolutePath());
+	protected final void assertStarted() {
+		Preconditions.checkState(started, "HiveShell was not started");
+	}
 
-        Preconditions.checkArgument(isTargetFileWithinTestDir,
-                "All resource target files should be created in a subdirectory to the test case basedir : %s",
-                resource);
-    }
-
-    protected final void assertFileExists(Path file) {
-        Preconditions.checkNotNull(file, "File argument is null");
-        Preconditions.checkArgument(Files.exists(file), "File %s does not exist", file);
-        Preconditions.checkArgument(Files.isRegularFile(file), "%s is not a file", file);
-    }
-
-    protected final void assertNotStarted() {
-        Preconditions.checkState(!started, "HiveShell was already started");
-    }
-
-
-    protected final void assertStarted() {
-        Preconditions.checkState(started, "HiveShell was not started");
-    }
-
-    private OutputStream createPreStartOutputStream(final ByteArrayOutputStream resourceOutputStream) {
-        return new OutputStream() {
-            @Override
-            public void write(int b) throws IOException {
-                // It should not be possible to write to the stream after the shell has been started.
-                assertNotStarted();
-                resourceOutputStream.write(b);
-            }
-        };
-    }
-
+	private OutputStream createPreStartOutputStream(
+			final ByteArrayOutputStream resourceOutputStream) {
+		return new OutputStream() {
+			@Override
+			public void write(int b) throws IOException {
+				// It should not be possible to write to the stream after the
+				// shell has been started.
+				assertNotStarted();
+				resourceOutputStream.write(b);
+			}
+		};
+	}
 
 }

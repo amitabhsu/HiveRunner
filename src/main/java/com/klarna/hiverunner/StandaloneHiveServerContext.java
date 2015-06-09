@@ -17,16 +17,43 @@
 package com.klarna.hiverunner;
 
 import com.klarna.reflection.ReflectionUtils;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.shims.Hadoop20SShims;
+//import org.apache.hadoop.hive.shims.Hadoop23Shims;
+
+import org.apache.hadoop.hive.shims.Hadoop23Shims;
+import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.ShimLoader;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.ClusterStatus;
+import org.apache.hadoop.mapred.InputFormat;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.TaskCompletionEvent;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobID;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.util.Progressable;
 import org.hsqldb.jdbc.JDBCDriver;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.PrivilegedExceptionAction;
+import java.util.List;
 import java.util.UUID;
+
+import javax.security.auth.login.LoginException;
 
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.*;
 
@@ -120,11 +147,370 @@ class StandaloneHiveServerContext implements HiveServerContext {
          *
          * Search for usage of org.apache.hadoop.hive.shims.HadoopShims#isLocalMode to find other affects of this.
         */
-        ReflectionUtils.setStaticField(ShimLoader.class, "hadoopShims", new Hadoop20SShims() {
+        ReflectionUtils.setStaticField(ShimLoader.class, "hadoopShims", new HadoopShims() {
             @Override
-            public boolean isLocalMode(Configuration conf) {
-                return false;
+        	public boolean isLocalMode(Configuration conf) {
+            	
+            	
+                return true;
             }
+
+			@Override
+			public String addServiceToToken(String arg0, String arg1)
+					throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void authorizeProxyAccess(String arg0,
+					UserGroupInformation arg1, String arg2, Configuration arg3)
+					throws IOException {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void closeAllForUGI(UserGroupInformation arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public int compareText(Text arg0, Text arg1) {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+
+			@Override
+			public Path createDelegationTokenFile(Configuration arg0)
+					throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public int createHadoopArchive(Configuration arg0, Path arg1,
+					Path arg2, String arg3) throws Exception {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+
+			@Override
+			public FileSystem createProxyFileSystem(FileSystem arg0, URI arg1) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public UserGroupInformation createProxyUser(String arg0)
+					throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public UserGroupInformation createRemoteUser(String arg0,
+					List<String> arg1) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public <T> T doAs(UserGroupInformation arg0,
+					PrivilegedExceptionAction<T> arg1) throws IOException,
+					InterruptedException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public boolean fileSystemDeleteOnExit(FileSystem arg0, Path arg1)
+					throws IOException {
+				// TODO Auto-generated method stub
+				return false;
+			}
+
+			@Override
+			public long getAccessTime(FileStatus arg0) {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+
+			@Override
+			public CombineFileInputFormatShim getCombineFileInputFormat() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public long getDefaultBlockSize(FileSystem arg0, Path arg1) {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+
+			@Override
+			public short getDefaultReplication(FileSystem arg0, Path arg1) {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+
+			@Override
+			public HdfsFileStatus getFullFileStatus(Configuration arg0,
+					FileSystem arg1, Path arg2) throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public HCatHadoopShims getHCatShim() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public URI getHarUri(URI arg0, URI arg1, URI arg2)
+					throws URISyntaxException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getInputFormatClassName() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getJobLauncherHttpAddress(Configuration arg0) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getJobLauncherRpcAddress(Configuration arg0) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public JobTrackerState getJobTrackerState(ClusterStatus arg0)
+					throws Exception {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getKerberosShortName(String arg0) throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getMRFramework(Configuration arg0) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public MiniDFSShim getMiniDfs(Configuration arg0, int arg1,
+					boolean arg2, String[] arg3) throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public MiniMrShim getMiniMrCluster(Configuration arg0, int arg1,
+					String arg2, int arg3) throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getShortUserName(UserGroupInformation arg0) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getTaskAttemptLogUrl(JobConf arg0, String arg1,
+					String arg2) throws MalformedURLException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String[] getTaskJobIDs(TaskCompletionEvent arg0) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getTokenFileLocEnvName() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getTokenStrForm(String arg0) throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public UserGroupInformation getUGIForConf(Configuration arg0)
+					throws LoginException, IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public WebHCatJTShim getWebHCatShim(Configuration arg0,
+					UserGroupInformation arg1) throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void inputFormatValidateInput(InputFormat arg0, JobConf arg1)
+					throws IOException {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public boolean isJobPreparing(RunningJob arg0) throws IOException {
+				// TODO Auto-generated method stub
+				return false;
+			}
+
+			@Override
+			public boolean isLoginKeytabBased() throws IOException {
+				// TODO Auto-generated method stub
+				return false;
+			}
+
+			@Override
+			public boolean isSecureShimImpl() {
+				// TODO Auto-generated method stub
+				return false;
+			}
+
+			@Override
+			public boolean isSecurityEnabled() {
+				// TODO Auto-generated method stub
+				return false;
+			}
+
+			@Override
+			public void loginUserFromKeytab(String arg0, String arg1)
+					throws IOException {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public boolean moveToAppropriateTrash(FileSystem arg0, Path arg1,
+					Configuration arg2) throws IOException {
+				// TODO Auto-generated method stub
+				return false;
+			}
+
+			@Override
+			public JobContext newJobContext(Job arg0) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public TaskAttemptContext newTaskAttemptContext(Configuration arg0,
+					Progressable arg1) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public TaskAttemptID newTaskAttemptID(JobID arg0, boolean arg1,
+					int arg2, int arg3) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void prepareJobOutput(JobConf arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void reLoginUserFromKeytab() throws IOException {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void refreshDefaultQueue(Configuration arg0, String arg1)
+					throws IOException {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void setFloatConf(Configuration arg0, String arg1, float arg2) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void setFullFileStatus(Configuration arg0,
+					HdfsFileStatus arg1, FileSystem arg2, Path arg3)
+					throws IOException {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void setJobLauncherRpcAddress(Configuration arg0, String arg1) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void setMRFramework(Configuration arg0, String arg1) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void setTmpFiles(String arg0, String arg1) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void setTokenStr(UserGroupInformation arg0, String arg1,
+					String arg2) throws IOException {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void setTotalOrderPartitionFile(JobConf arg0, Path arg1) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public String unquoteHtmlChars(String arg0) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public boolean usesJobShell() {
+				// TODO Auto-generated method stub
+				return false;
+			}
         });
     }
 

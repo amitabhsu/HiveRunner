@@ -1,158 +1,149 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.klarna</groupId>
-    <artifactId>hiverunner</artifactId>
-    <version>0.1.cdh.0</version>
-    <packaging>jar</packaging>
+	<groupId>com.klarna</groupId>
+	<artifactId>hiverunner</artifactId>
+	<version>0.9.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<org.apache.hadoop.version>2.3.0-cdh5.1.3</org.apache.hadoop.version>
+		<hive.version>0.12.0-cdh5.1.3</hive.version>
+	</properties>
 
-    <scm>
-        <connection>scm:${git.repo}</connection>
-        <developerConnection>scm:${git.repo}</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
+	<dependencies>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+		<!-- Hive & Hadoop related Dependencies Start Here -->
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-serde</artifactId>
+			<version>0.12.0-cdh5.1.3</version>
+		</dependency>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-serde</artifactId>
-            <version>0.12.0</version>
-        </dependency>
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-service</artifactId>
+			<version>0.12.0-cdh5.1.3</version>
+		</dependency>
 
-        <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>2.3.1</version>
-        </dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-core</artifactId>
+			<version>2.3.0-mr1-cdh5.1.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+			<version>2.3.0-cdh5.1.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-contrib</artifactId>
+			<version>0.12.0-cdh5.1.3</version>
+			<scope>test</scope>
+		</dependency>
 
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-service</artifactId>
-            <version>0.12.0</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>derby</artifactId>
-                    <groupId>org.apache.derby</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>datanucleus-api-jdo</artifactId>
-                    <groupId>org.datanucleus</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>datanucleus-core</artifactId>
-                    <groupId>org.datanucleus</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>datanucleus-rdbms</artifactId>
-                    <groupId>org.datanucleus</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>bonecp</artifactId>
-                    <groupId>com.jolbox</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+		<!-- Hive & Hadoop related Dependencies End Here -->
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.9.8</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-httpclient</groupId>
+			<artifactId>commons-httpclient</artifactId>
+			<version>3.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-collections</groupId>
+			<artifactId>commons-collections</artifactId>
+			<version>3.2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mortbay.jetty</groupId>
+			<artifactId>jsp-2.1</artifactId>
+			<version>6.1.14</version>
 
+		</dependency>
+		<dependency>
+			<groupId>hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>1.8.0.10</version>
 
-        <!-- The latest versions of datanucleus seams to be faster than the one included in hive -->
-        <dependency>
-            <artifactId>datanucleus-api-jdo</artifactId>
-            <groupId>org.datanucleus</groupId>
-            <version>3.2.8</version>
-        </dependency>
+		</dependency>
+		<dependency>
+			<groupId>org.mortbay.jetty</groupId>
+			<artifactId>jetty</artifactId>
+			<version>6.1.14</version>
 
-        <dependency>
-            <artifactId>datanucleus-core</artifactId>
-            <groupId>org.datanucleus</groupId>
-            <version>3.2.12</version>
-        </dependency>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.thrift</groupId>
+			<artifactId>libfb303</artifactId>
+			<version>0.7.0</version>
+		</dependency>
+		<!-- Always put this before JUnit or the class loader might load the wrong 
+			Matcher -->
+		<dependency>
+			<groupId>org.hamcrest</groupId>
+			<artifactId>hamcrest-all</artifactId>
+			<version>1.3</version>
+			<scope>test</scope>
+		</dependency>
 
-        <dependency>
-            <artifactId>datanucleus-rdbms</artifactId>
-            <groupId>org.datanucleus</groupId>
-            <version>3.2.11</version>
-        </dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
 
+	<repositories>
+		<repository>
+			<id>cloudera</id>
+			<url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>twitter</id>
+			<url>https://github.com/Parquet/parquet-mr</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
 
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-            <version>1.2.1</version>
-        </dependency>
+	</repositories>
 
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-contrib</artifactId>
-            <version>0.12.0</version>
-            <scope>test</scope>
-        </dependency>
+	<build>
+		<plugins>
+			<!-- forkMode:always resolves OOM error when running unit tests -->
 
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.9.8</version>
-        </dependency>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
 
-        <!-- Always put this before JUnit or the class loader might load the wrong Matcher -->
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>provided</scope>
-        </dependency>
-
-    </dependencies>
-
-    <build>
-        <plugins>
-            <!-- forkMode:always resolves OOM error when running unit tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.16</version>
-                <configuration>
-                    <forkMode>always</forkMode>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+		</plugins>
+	</build>
 </project>
